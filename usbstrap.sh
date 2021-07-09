@@ -82,9 +82,10 @@ echo "Rerun Tip:"
 echo "=========================================================="
 echo ""
 echo "BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET $0"
-echo '#!/bin/bash' > bootstrap.sh
-echo "BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET $0" >> bootstrap.sh
-chmod +x bootstrap.sh
+echo '#!/bin/bash' > output/bootstrap.sh
+echo '#this script was automatically generated to quickly recreate the last image' > output/bootstrap.sh
+echo "BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET $0" >> output/bootstrap.sh
+chmod +x output/bootstrap.sh
 echo ""
 echo "=========================================================="
 echo ""
@@ -159,7 +160,7 @@ BOOTSTRAP_DEPLOYTYPE=".${BOOTSTRAP_DEPLOYTYPE}"
 BOOTSTRAP_FILE="BOOT/ks.cfg${BOOTSTRAP_DEPLOYTYPE}.template"
 if [ -f "${BOOTSTRAP_FILE}" ]; then
  sudo cat ${BOOTSTRAP_FILE} | sed -e "s/%NETWORKLINE%/${NETWORKLINE}/" -e "s/%NETWORKLINE2%/${NETWORKLINE2}/" -e "s/%HOSTNAME%/${INITHOST}/" -e "s/%LANIPADDR%/${LANIPADDR}/" -e "s/%LANNETMASK%/${LANNETMASK}/" -e "s/%LANIPNET%/${LANIPNET}/g" | sudo tee  BOOT/ks.cfg
- cp BOOT/ks.cfg bootstrap.ks
+ cp BOOT/ks.cfg output/bootstrap.ks
 fi
 
 cat << EOF | sudo tee -a  BOOT/syslinux.cfg

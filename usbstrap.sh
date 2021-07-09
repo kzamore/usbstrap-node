@@ -66,9 +66,9 @@ if [ -z "$LANIPNET" ]; then
 fi
 
 if [ -z "$TGTSIZE" ]; then
-	TGTSIZE=6
+	TGTSIZE=75
 fi
-TGTSIZE="${TGTSIZE}G"
+TGTSIZE="${TGTSIZE}M"
 	
 if [ "$IPADDR" = "0.0.0.0" ]; then
 	NETWORKLINE="dhcp "
@@ -168,8 +168,6 @@ label linux
   kernel vmlinuz
   append initrd=initrd.img net.ifnames=0 biosdevname=0 inst.stage2=hd:sdb2:/ ks=hs:sdb1:/ks.cfg 
 EOF
-
-dd if=CentOSDVD.iso | pv | sudo dd of=DATA/CentOS7.iso bs=1M
 
 echo "Cleaning up.."
 for d in BOOT DATA; do 

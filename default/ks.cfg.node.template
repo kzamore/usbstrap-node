@@ -78,9 +78,11 @@ fi
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 wget -O - https://api.nodelogic.net/v1/node/checkin?nodeID=$NODEID
 echo "node_checkin::$?"
-wget -O /root/starterpack-openstack.tgz https://api.nodelogic.net/v1/starterpack/openstack/download?nodeID=$NODEID
+yum install -y unzip
+wget -O $(mktemp) https://api.nodelogic.net/v1/starterpack/openstack/download?nodeID=$NODEID
+wget -O /tmp/starterpack.zip https://github.com/kzamore/starterpack/archive/refs/heads/master.zip
 echo "starterpack_openstack_download::$?"
-tar -C /root -xvzf /root/starterpack-openstack.tgz
+(cd /root && unzip /tmp/starterpack.zip)
 
 yum install -y epel-release
 yum install -y openvpn
@@ -88,7 +90,6 @@ yum install -y lsof iptables-services ntp ntpdate
 
 mkdir -p /root/.ssh/
 cat << EOF > /root/.ssh/authorized_keys
-#ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCYEaIKCQaW5XRAFyHQARelMi30LDlFDfeORhAKvGfqCK6LP97Kt4yXiXzxSoXZhIHmcvhfZTEXbhvXqiU0FF6KFVr3lZB3jdgZFZqQ3CqFNojbOO/M/7wtniWyFfU+FdJuMG7F4VneXosKSyYlE6XnQX8mr5WdNK3zC4xB0NOoZsWjKaaWRuShLWr0PffiCT7+ln+3KDLJKJkC6dpZA4vP4/ww236m9qafdBDfcN/ZtG5z9N0G7ecOXSRN5oRNuFlBECn5fOuGSX6zQIGHayTGKUHg0uZ3O1lvMZk+sQR4BPGG0sgVO/mRiT8iRK4/nPuxfvvN8AJhm7mxipBXstN root
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC8RgF/F6RLrQWgQdFmZ8iOYFpwHg6xXMCZ0GlVZY3hqIm8crI/1eagvzt44Fo1t8A9f8qqcOqsUPMtp2urbjrVOAWj0tL1pGtWV0N3ZkUy1qKsHY/Qza7FZwLSfXkraLLbiqA2ck0REMsjNUAEAd2JXBWgBi0iz4Q4iHxuztsDAA2YsmIlQN2mGtext00dkvzAQr0s73aYd4MiLZPLVGndQA/opuTQJmIWWeZdfkKAp4kcJ5MOtyyZmdgEdQXFGMd7PznlIjxTPnjXO0EsJVyvP5afNaQxNPFnod7rnW/hoSSxWSS2bi9rgzvPSVg80UFmQGzCyAcrgy6yP6atINF9 root
 EOF
 chmod 700 /root/.ssh
@@ -108,7 +109,6 @@ cat << EOF > /etc/sysconfig/iptables
 -A NodeLogic-Public -i br-ex -p icmp -j ACCEPT
 -A NodeLogic-Public -s 66.45.242.170/32 -i br-ex -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
 -A NodeLogic-Public -s 66.45.242.170/32 -i br-ex -p tcp -m state --state NEW -m tcp --dport 10050 -j ACCEPT
--A NodeLogic-Public -s 216.230.227.80/28 -i br-ex -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
 -A NodeLogic-Public -s %LANIPNET%.0/24 -i br-ex -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
 -A NodeLogic-Public -i br-ex -j DROP
 COMMIT
@@ -132,12 +132,15 @@ sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk
     # default - start at beginning of disk
     # default - extend partition to end of disk
   p # print the in-memory partition table
+  t # set type
+    # default - first disk
+  31 # linux LVM
   w # write the partition table
   q # and we're done
 EOF
-pvcreate 
-vgcreate cinder-volumes 
-cd /root/openstack
+pvcreate /dev/sdb1
+vgcreate cinder-volumes /dev/sdb1
+cd /root/starterpack/openstack
 ./01_update.sh
 ./02_openstack.sh
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`

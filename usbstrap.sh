@@ -92,9 +92,11 @@ echo ""
 echo "Prereqs.."
 APT=`which apt`
 if [ -z "$APT" ]; then
-	echo "This needs to be run on a debian or ubuntu based system!"
-	exit 1
+sudo yum install -y syslinux pv qemu-img aria2
+else
+sudo apt install -y syslinux pv qemu-utils aria2
 fi
+
 if [ -f bootstrap.img ]; then
     echo "existing bootstrap image detected!"
     sleep 2
@@ -107,10 +109,9 @@ if [ -f bootstrap.img ]; then
     rm bootstrap.img
 fi
 
-sudo apt install -y syslinux pv qemu-utils aria2
 
 if [ ! -f CentOSDVD.iso ]; then 
-aria2c -s 16 -x 16 --auto-file-renaming=false -o CentOSDVD.iso  http://repo1.dal.innoscale.net/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso
+aria2c -s 16 -x 16 --auto-file-renaming=false -o CentOSDVD.iso  http://repo1.dal.innoscale.net/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso
 #aria2c -x16 --auto-file-renaming=false -o CentOSDVD.iso http://mirror.centos.org/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso
 #aria2c -x5 -o CentOSDVD.iso http://mirrors.raystedman.org/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso
 else

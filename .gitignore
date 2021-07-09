@@ -5,3 +5,4 @@ bootstrap.ks
 DATA/
 BOOT/
 DVD/
+output/*

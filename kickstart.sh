@@ -175,13 +175,13 @@ echo $?
 sleep 5
 cat /etc/resolv.conf | grep -qe "^nameserver"
 if [ $? -ne 0 ]; then
-        echo "Adding nameserver" | tee -a $LOGPATH
+        echo "Adding nameserver"
         echo "nameserver 8.8.8.8" >> /etc/resolv.conf
         time packstack --answer-file=/root/${HOST}.ans 2>&1
 fi
 cat /proc/cpuinfo |egrep -e '(processor|model name)' | tail -2
 
-(cd /root && git clone https://github.com/kzamore/mainevent)
+(cd /root && git clone https://github.com/kzamore/mainevent /root/mainevent)
 TMPFILE=`mktemp --suffix .zip`
 wget -qO $TMPFILE https://releases.hashicorp.com/terraform/1.0.1/terraform_1.0.1_linux_amd64.zip
 unzip -xod /root/mainevent $TMPFILE
@@ -214,18 +214,6 @@ cd /root/mainevent/velocity-ops
 
 ../terraform init
 ../terraform apply -var-file="deploy.tfvars" -auto-approve
-
-chmod 755 /root/bootstrap.sh
-#!/bin/bash
-#if [ ! -f /root/.nodelogic_boot ]; then 
-#	/root/bootstrap.sh
-#	touch /root/.nodelogic_boot
-#	reboot
-#fi
-#EOL
-#cat /etc/rc.local >> /root/rc.local
-#mv /root/rc.local /etc/rc.local
-#chmod 755 /etc/rc.local
 
 sed -e 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="net\.ifnames=0 nomodeset biosdevname=0/' -i /etc/default/grub
 

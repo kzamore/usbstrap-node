@@ -47,19 +47,12 @@ sed -i "s/dnssec-validation yes/dnssec-validation no/" /etc/named.conf
 setenforce 0
 echo SELINUX=permissive > /etc/selinux/config
 
-if [ -e /etc/ssh/sshd_config ]; then
-  #sed -e "/PermitRootLogin/d" -e "/Port 22/a Port 220" -i /etc/ssh/sshd_config
-  echo "Port 22" >> /etc/ssh/sshd_config
-  echo "Port 220" >> /etc/ssh/sshd_config
-  echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
-fi
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 wget -O - https://api.nodelogic.net/v1/node/checkin?nodeID=$NODEID
 echo "node_checkin::$?"
 wget -O $(mktemp) https://api.nodelogic.net/v1/starterpack/openstack/download?nodeID=$NODEID
 wget -O /tmp/starterpack.zip https://github.com/kzamore/starterpack/archive/refs/heads/master.zip
 echo "starterpack_openstack_download::$?"
-(cd /root && unzip /tmp/starterpack.zip)
 
 dnf config-manager --enable powertools
 dnf install -y centos-release-openstack-wallaby
@@ -128,15 +121,16 @@ fi
 echo "#add localhost as hosts entry"
 cat /etc/hosts | grep -q "$(hostname)\$"
 IPADDR=$(ip a show dev eth0 | grep 'inet ' | awk '{print $2}' | grep -v '::' | cut -d'/' -f1)
-if [ $? -ne 0 ]; then
-        echo "/ETC/HOSTS: $IPADDR $(hostname)"
-        echo "$IPADDR $(hostname)" >> /etc/hosts
-fi
+echo "/ETC/HOSTS: $IPADDR $(hostname)"
+echo "$IPADDR $(hostname)" >> /etc/hosts
 
 echo "#add sshd ports"
-#echo "Port 22" >> /etc/ssh/sshd_config
-#echo "Port 220" >> /etc/ssh/sshd_config
-service sshd restart
+echo "Port 22" >> /etc/ssh/sshd_config
+echo "Port 220" >> /etc/ssh/sshd_config
+echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
+systemctl restart sshd 
+tail -10 /var/log/syslog
+sleep 30
 
 echo "#local host is known host"
 cat ~/.ssh/known_hosts | grep -q "$(hostname)\$"
@@ -150,7 +144,6 @@ fi
 
 HOST=$(hostname)
 packstack --gen-answer-file=/root/${HOST}.ans
-sleep 30
 sed -e "s/%CONTROLLERLIST%/$IPADDR/g" -e "s/%COMPUTELIST%/$IPADDR/g" -e "s/%NETWORKLIST%/$IPADDR/g" -e "s/%STORAGELIST%/$IPADDR/g" -e "s/%SAHARALIST%/$IPADDR/g" -e "s/%AMQPLIST%/$IPADDR/g" -e "s/%MYSQLLIST%/$IPADDR/g" -e "s/%REDISLIST%/$IPADDR/g" -e "s/%LDAPSERVER%/$IPADDR/g" -e "s/%HOSTNAME%/$HOST/g" < /root/starterpack/files/dmzcloud.ans.template >> /root/${HOST}.anw
 IFS=$'\n'
 for line in $(cat /root/${HOST}.anw | egrep -ve '^(#|$)'); do
@@ -222,6 +215,10 @@ NodeLogic 8
 Authorize this instance at https://nodelogic.net/a/$NODEID
 
 EOI
+
+echo "#pausing for debug"
+sleep 600
+
 chvt 1
 
 %end

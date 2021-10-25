@@ -1,7 +1,8 @@
 bootstrap.img
 bootstrap.sh
-CentOSDVD.iso
+CentOS8DVD.iso
 bootstrap.ks
+output.log
 DATA/
 BOOT/
 DVD/

@@ -94,8 +94,8 @@ if [ -z "$SSHKEY" ]; then
 	SSHKEYPUB=$(ssh-keygen -yf $SSHKEY)
 fi
 if [ -z "$CENTOSURL" ]; then
-	DEF="https://mirror.leaseweb.com/centos/7/os/x86_64/"
-	echo -n "(CENTOSURL) Enter URL to install CentOS 7 from: [$DEF] "
+	DEF="http://repos.dfw.quadranet.com/centos/8-stream"
+	echo -n "(CENTOSURL) Enter URL to install CentOS 8 from: [$DEF] "
 	read CENTOSURL
 	if [ -z "$CENTOSURL" ]; then
 		CENTOSURL=$DEF
@@ -111,7 +111,7 @@ if [ -z "$TIMEZONE" ]; then
 fi
 
 if [ -z "$TGTSIZE" ]; then
-	TGTSIZE=585
+	TGTSIZE=785
 fi
 TGTSIZE="${TGTSIZE}M"
 	
@@ -157,13 +157,11 @@ if [ -f bootstrap.img ]; then
     rm bootstrap.img
 fi
 
-
-if [ ! -f CentOSDVD.iso ]; then 
-aria2c -s 16 -x 16 --auto-file-renaming=false -o CentOSDVD.iso  http://repo1.dal.innoscale.net/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso
-#aria2c -x16 --auto-file-renaming=false -o CentOSDVD.iso http://mirror.centos.org/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso
-#aria2c -x5 -o CentOSDVD.iso http://mirrors.raystedman.org/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-2003.iso
+CENTOSDVD="CentOS8DVD.iso"
+if [ ! -f "$CENTOSDVD" ]; then 
+aria2c -s 16 -x 16 --auto-file-renaming=false -o $CENTOSDVD  ${CENTOSURL}/isos/x86_64/CentOS-Stream-8-x86_64-latest-boot.iso
 else
-echo "cached $(ls -l CentOSDVD.iso)"
+echo "cached $(ls -l ${CENTOSDVD})"
 fi
 
 
@@ -173,7 +171,7 @@ echo "n
 
 
 
-+580M
++780M
 t
 c
 a
@@ -197,14 +195,17 @@ sudo syslinux -i ${LOOPDEV}p1
 mkdir BOOT DATA DVD
 sudo mount ${LOOPDEV}p1 BOOT
 sudo mount ${LOOPDEV}p2 DATA
-sudo mount CentOSDVD.iso DVD
+sudo mount ${CENTOSDVD} DVD
 
 echo "Bootstrap deploying..."
 sudo cp -av DVD/isolinux/* BOOT
-sudo cp -av /usr/lib/syslinux/modules/bios/{libcom32,libutil,menu,vesamenu}.c32 BOOT
+sudo cp -av /usr/lib/syslinux/modules/bios/menu.c32 BOOT
+#sudo cp -av /usr/lib/syslinux/modules/bios/{libcom32,libutil,menu,vesamenu}.c32 BOOT
 sudo mv BOOT/isolinux.cfg BOOT/syslinux.cfg
-sudo mkdir BOOT/LiveOS
-sudo cp -av DVD/LiveOS/squashfs.img BOOT/LiveOS
+#sudo mkdir BOOT/LiveOS
+#sudo cp -av DVD/LiveOS/squashfs.img BOOT/LiveOS
+sudo mkdir BOOT/images
+sudo cp -av DVD/images/install.img BOOT/images
 sudo cp -av default/* BOOT
 BOOTSTRAP_DEPLOYTYPE=".${BOOTSTRAP_DEPLOYTYPE}"
 
@@ -230,7 +231,7 @@ sudo cp assets/* BOOT
 
 cat << EOF | sudo tee  BOOT/syslinux.cfg
 default vesamenu.c32
-timeout 600
+timeout 10
 
 display boot.msg
 
@@ -239,7 +240,7 @@ display boot.msg
 # the menu itself for as long as the screen remains in graphics mode.
 menu clear
 menu background splash.png
-menu title NodeLogic 7
+menu title NodeLogic 8
 menu vshift 8
 menu rows 18
 menu margin 8
@@ -292,12 +293,12 @@ menu separator # insert an empty line
 label nodelogic
   menu label ^Kickstart Nodelogic (Node Deploy)
   kernel vmlinuz
-  append initrd=initrd.img net.ifnames=0 biosdevname=0 inst.stage2=hd:LABEL=BOOT  ks=hd:LABEL=DATA:/ks.cfg 
+  append initrd=initrd.img nomodeset net.ifnames=0 biosdevname=0 inst.stage2=hd:LABEL=BOOT  inst.ks=hd:LABEL=DATA:/ks.cfg 
 
 label linux
-  menu label ^Install CentOS 7 (NetInstall Only)
+  menu label ^Install CentOS 8 (NetInstall Only)
   kernel vmlinuz
-  append initrd=initrd.img inst.stage2=hd:LABEL=BOOT quiet
+  append initrd=initrd.img nomodeset inst.stage2=hd:LABEL=BOOT quiet
 
 menu separator # insert an empty line
 

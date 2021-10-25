@@ -221,7 +221,7 @@ ksHeader output/bootstrap.ks
 ksPost output/bootstrap.ks
 sudo cp output/bootstrap.ks BOOT/ks.cfg
 sudo cp output/bootstrap.ks DATA/ks.cfg
-sudo cp assets/* BOOT
+sudo cp assets/bootassets/* BOOT
 
 #BOOTSTRAP_FILE="BOOT/ks.cfg${BOOTSTRAP_DEPLOYTYPE}.template"
 #if [ -f "${BOOTSTRAP_FILE}" ]; then

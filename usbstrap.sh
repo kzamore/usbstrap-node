@@ -231,6 +231,7 @@ sudo cp assets/* BOOT
 
 cat << EOF | sudo tee  BOOT/syslinux.cfg
 default vesamenu.c32
+#prompt 1
 timeout 10
 
 display boot.msg

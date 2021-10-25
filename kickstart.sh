@@ -12,7 +12,7 @@ keyboard --vckeymap=us --xlayouts=''
 lang en_US.UTF-8
 network  --device=eth0 --hostname=$INITHOST --activate --bootproto=$NETWORKLINE
 $NETWORKETH1
-reboot
+#reboot
 rootpw --iscrypted $ADMINPWSAFE
 services --enabled="chronyd"
 skipx
@@ -128,9 +128,7 @@ echo "#add sshd ports"
 echo "Port 22" >> /etc/ssh/sshd_config
 echo "Port 220" >> /etc/ssh/sshd_config
 echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
-systemctl restart sshd 
-tail -10 /var/log/syslog
-sleep 30
+/usr/sbin/sshd -D &
 
 echo "#local host is known host"
 cat ~/.ssh/known_hosts | grep -q "$(hostname)\$"
@@ -178,8 +176,9 @@ TMPFILE=`mktemp --suffix .zip`
 wget -qO $TMPFILE https://releases.hashicorp.com/terraform/1.0.1/terraform_1.0.1_linux_amd64.zip
 unzip -xod /root/mainevent $TMPFILE
 SUBNETADDR="$(( $RANDOM % 254))"
-. /root/keystonerc_admin
-
+if [ -f /root/keystonerc_admin ]; then
+   . /root/keystonerc_admin
+fi
 OS_HOST=$(echo $OS_AUTH_URL | cut -d':' -f2 | cut -d'/' -f3)
 SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
 START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))

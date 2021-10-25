@@ -61,6 +61,7 @@ wget -O /tmp/starterpack.zip https://github.com/kzamore/starterpack/archive/refs
 echo "starterpack_openstack_download::$?"
 (cd /root && unzip /tmp/starterpack.zip)
 
+dnf config-manager --enable powertools
 dnf install -y centos-release-openstack-wallaby
 dnf update -y
 dnf install -y openstack-packstack
@@ -110,8 +111,8 @@ EOF
 chmod 600 /etc/sysconfig/iptables
 
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
-wget -O - https://api.nodelogic.net/v1/starterpack/openstack/checkin?nodeID=$NODEID
-echo "starterpack_openstack_checkin::$?"
+#wget -O - https://api.nodelogic.net/v1/starterpack/openstack/checkin?nodeID=$NODEID
+#echo "starterpack_openstack_checkin::$?"
 
 mkdir -p /root/starterpack/files
 curl https://raw.githubusercontent.com/kzamore/starterpack/master/openstack/files/dmzcloud.ans.template > /root/starterpack/files/dmzcloud.ans.template
@@ -133,8 +134,8 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "#add sshd ports"
-echo "Port 22" >> /etc/ssh/sshd_config
-echo "Port 220" >> /etc/ssh/sshd_config
+#echo "Port 22" >> /etc/ssh/sshd_config
+#echo "Port 220" >> /etc/ssh/sshd_config
 service sshd restart
 
 echo "#local host is known host"
@@ -148,10 +149,8 @@ if [ $? -ne 0 ]; then
 fi
 
 HOST=$(hostname)
-if [ ! -f /root/${HOST}.ans ]; then
-        packstack --gen-answer-file=/root/${HOST}.ans
-fi
-
+packstack --gen-answer-file=/root/${HOST}.ans
+sleep 30
 sed -e "s/%CONTROLLERLIST%/$IPADDR/g" -e "s/%COMPUTELIST%/$IPADDR/g" -e "s/%NETWORKLIST%/$IPADDR/g" -e "s/%STORAGELIST%/$IPADDR/g" -e "s/%SAHARALIST%/$IPADDR/g" -e "s/%AMQPLIST%/$IPADDR/g" -e "s/%MYSQLLIST%/$IPADDR/g" -e "s/%REDISLIST%/$IPADDR/g" -e "s/%LDAPSERVER%/$IPADDR/g" -e "s/%HOSTNAME%/$HOST/g" < /root/starterpack/files/dmzcloud.ans.template >> /root/${HOST}.anw
 IFS=$'\n'
 for line in $(cat /root/${HOST}.anw | egrep -ve '^(#|$)'); do
@@ -164,8 +163,8 @@ cp /root/${HOST}.ans /root/${HOST}-original.ans
 
 if [ ! -f /root/.ssh/id_rsa ]; then
         mkdir /root/.ssh
-        ssh-keygen -f /root/.ssh/id_rsa 
-        cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
+        ssh-keygen -f /root/.ssh/id_rsa  -b 4096 -q -N ''
+        cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
         chmod 700 /root/.ssh
         chmod 600 /root/.ssh/authorized_keys /root/.ssh/id_rsa
 fi
@@ -193,7 +192,7 @@ SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
 START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))
 END_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))
 
-ssh-keygen -b 4096 -t rsa -f /root/cloudkey -q -N ""
+ssh-keygen -b 4096 -t rsa -f /root/cloudkey -q -N ''
 CLOUDKEY=$(cat /root/cloudkey.pub)
 
 cat << EOR > /root/mainevent/velocity-ops/deploy.tfvars
@@ -218,7 +217,11 @@ cd /root/mainevent/velocity-ops
 sed -e 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="net\.ifnames=0 nomodeset biosdevname=0/' -i /etc/default/grub
 
 #branding
-sed -e 's/\\S/NodeLogic 8/' -i /etc/issue
+cat << EOI > /etc/issue
+NodeLogic 8
+Authorize this instance at https://nodelogic.net/a/$NODEID
+
+EOI
 chvt 1
 
 %end
@@ -228,6 +231,7 @@ chvt 1
 biosdevname
 caching-nameserver
 chrony
+curl
 git
 iptables-services
 kexec-tools

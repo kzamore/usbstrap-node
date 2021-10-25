@@ -3,8 +3,7 @@
 function ksHeader() {
 	cat << EOF > $1
 auth  --enableshadow  --passalgo=sha512
-install
-url --url="${CENTOSURL}"
+url --url="${CENTOSURL}/BaseOS/x86_64/os/"
 text
 firewall --disabled
 firstboot --disable
@@ -23,6 +22,7 @@ user --name=$ADMINUSER --password=$ADMINPWSAFE --iscrypted
 bootloader --append="net.ifnames=0 biosdevname=0 crashkernel=auto" --location=mbr --boot-drive=sda
 zerombr
 clearpart --all --initlabel
+part biosboot --fstype=biosboot --size=1 --ondisk=sda
 part /boot --fstype="ext4" --size=5000 --ondisk=sda
 part pv.01 --size=112500 --ondisk=sda
 part pv.02 --ondisk=sda --size=50 --grow
@@ -36,26 +36,33 @@ EOF
 
 function ksPost() {
 	cat << 'EOP' >> $1
-%post
-
-yum update -y
+%post --log=/root/nodelogic.log
+exec < /dev/tty3 > /dev/tty3
+chvt 3
+dnf update -y
 sed -i "s/dnssec-validation yes/dnssec-validation no/" /etc/named.conf
+setenforce 0
 echo SELINUX=permissive > /etc/selinux/config
 if [ -e /etc/ssh/sshd_config ]; then
-  sed -e "/PermitRootLogin/d" -e "/Port 22/a Port 220" -i /etc/ssh/sshd_config
+  #sed -e "/PermitRootLogin/d" -e "/Port 22/a Port 220" -i /etc/ssh/sshd_config
+  echo "Port 22" >> /etc/ssh/sshd_config
+  echo "Port 220" >> /etc/ssh/sshd_config
   echo "PermitRootLogin without-password" >> /etc/ssh/sshd_config
 fi
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 wget -O - https://api.nodelogic.net/v1/node/checkin?nodeID=$NODEID
 echo "node_checkin::$?"
-yum install -y unzip
 wget -O $(mktemp) https://api.nodelogic.net/v1/starterpack/openstack/download?nodeID=$NODEID
 wget -O /tmp/starterpack.zip https://github.com/kzamore/starterpack/archive/refs/heads/master.zip
 echo "starterpack_openstack_download::$?"
 (cd /root && unzip /tmp/starterpack.zip)
 
-yum install -y epel-release
-yum install -y openvpn lsof iptables-services ntp ntpdate 
+dnf install -y centos-release-openstack-wallaby
+dnf update -y
+dnf install -y openstack-packstack
+dnf install -y epel-release
+dnf install -y openvpn
+dnf remove -y epel-release
 
 mkdir -p /root/.ssh/
 
@@ -120,50 +127,172 @@ sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk
 EOF
 pvcreate /dev/sdb1
 vgcreate cinder-volumes /dev/sdb1
-cd /root/starterpack/openstack
-./01_update.sh
-./02_openstack.sh
+EOG
+
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 wget -O - https://api.nodelogic.net/v1/starterpack/openstack/checkin?nodeID=$NODEID
 echo "starterpack_openstack_checkin::$?"
 
-EOG
+mkdir -p /root/starterpack/files
+curl https://raw.githubusercontent.com/kzamore/starterpack/master/openstack/files/dmzcloud.ans.template > /root/starterpack/files/dmzcloud.ans.template
+
+echo "#its always dns"
+
+cat /etc/resolv.conf | grep -qe "^nameserver"
+if [ $? -ne 0 ]; then
+        echo "Adding nameserver" 
+        echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+fi
+
+echo "#add localhost as hosts entry"
+cat /etc/hosts | grep -q "$(hostname)\$"
+IPADDR=$(ip a show dev eth0 | grep 'inet ' | awk '{print $2}' | grep -v '::' | cut -d'/' -f1)
+if [ $? -ne 0 ]; then
+        echo "/ETC/HOSTS: $IPADDR $(hostname)"
+        echo "$IPADDR $(hostname)" >> /etc/hosts
+fi
+
+echo "#add sshd ports"
+echo "Port 22" >> /etc/ssh/sshd_config
+echo "Port 220" >> /etc/ssh/sshd_config
+service sshd restart
+
+echo "#local host is known host"
+cat ~/.ssh/known_hosts | grep -q "$(hostname)\$"
+if [ $? -ne 0 ]; then
+        mkdir -p ~/.ssh
+        echo "$(hostname) $(cat /etc/ssh/ssh_host_ecdsa_key.pub)" >> ~/.ssh/known_hosts
+        echo "$(cat /etc/hosts | grep $(hostname) | awk '{print $1}') $(cat /etc/ssh/ssh_host_ecdsa_key.pub)" >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+        chmod 700 ~/.ssh
+fi
+
+HOST=$(hostname)
+if [ ! -f /root/${HOST}.ans ]; then
+        packstack --gen-answer-file=/root/${HOST}.ans
+fi
+
+sed -e "s/%CONTROLLERLIST%/$IPADDR/g" -e "s/%COMPUTELIST%/$IPADDR/g" -e "s/%NETWORKLIST%/$IPADDR/g" -e "s/%STORAGELIST%/$IPADDR/g" -e "s/%SAHARALIST%/$IPADDR/g" -e "s/%AMQPLIST%/$IPADDR/g" -e "s/%MYSQLLIST%/$IPADDR/g" -e "s/%REDISLIST%/$IPADDR/g" -e "s/%LDAPSERVER%/$IPADDR/g" -e "s/%HOSTNAME%/$HOST/g" < /root/starterpack/files/dmzcloud.ans.template >> /root/${HOST}.anw
+IFS=$'\n'
+for line in $(cat /root/${HOST}.anw | egrep -ve '^(#|$)'); do
+        SNIP=$(echo $line | cut -d'=' -f1)
+        ANS=$(echo $line | cut -d'=' -f2- | sed -e 's/\//\\\//g')
+        echo "$SNIP -> $ANS"
+        sed -e "s/^${SNIP}=.*$/${SNIP}=${ANS}/" -i /root/${HOST}.ans 
+done
+cp /root/${HOST}.ans /root/${HOST}-original.ans
+
+if [ ! -f /root/.ssh/id_rsa ]; then
+        mkdir /root/.ssh
+        ssh-keygen -f /root/.ssh/id_rsa 
+        cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
+        chmod 700 /root/.ssh
+        chmod 600 /root/.ssh/authorized_keys /root/.ssh/id_rsa
+fi
+
+time packstack --answer-file=/root/${HOST}.ans 2>&1
+echo $?
+sleep 5
+cat /etc/resolv.conf | grep -qe "^nameserver"
+if [ $? -ne 0 ]; then
+        echo "Adding nameserver" | tee -a $LOGPATH
+        echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+        time packstack --answer-file=/root/${HOST}.ans 2>&1
+fi
+cat /proc/cpuinfo |egrep -e '(processor|model name)' | tail -2
+
+(cd /root && git clone https://github.com/kzamore/mainevent)
+TMPFILE=`mktemp --suffix .zip`
+wget -qO $TMPFILE https://releases.hashicorp.com/terraform/1.0.1/terraform_1.0.1_linux_amd64.zip
+unzip -xod /root/mainevent $TMPFILE
+SUBNETADDR="$(( $RANDOM % 254))"
+. /root/keystonerc_admin
+
+OS_HOST=$(echo $OS_AUTH_URL | cut -d':' -f2 | cut -d'/' -f3)
+SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
+START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))
+END_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))
+
+ssh-keygen -b 4096 -t rsa -f /root/cloudkey -q -N ""
+CLOUDKEY=$(cat /root/cloudkey.pub)
+
+cat << EOR > /root/mainevent/velocity-ops/deploy.tfvars
+openstack_host = "$HOST"
+openstack_password = "$OS_PASSWORD"
+cloudkey_value = "$CLOUDKEY"
+public_subnet_cidr= "$SUBNET_CIDR"
+public_subnet_gateway= "${GATEWAY}"
+public_subnet_start_ip= "$START_ADDR"
+public_subnet_end_ip= "$END_ADDR"
+shared_subnet_cidr= "10.${SUBNETADDR}.68.0/24"
+shared_subnet_gateway= "10.${SUBNETADDR}.68.1"
+shared_subnet_start_ip= "10.${SUBNETADDR}.68.2"
+shared_subnet_end_ip= "10.${SUBNETADDR}.68.254"
+EOR
+
+cd /root/mainevent/velocity-ops
+
+../terraform init
+../terraform apply -var-file="deploy.tfvars" -auto-approve
 
 chmod 755 /root/bootstrap.sh
-cat << EOL > /root/rc.local
 #!/bin/bash
-if [ ! -f /root/.nodelogic_boot ]; then 
-	/root/bootstrap.sh
-	touch /root/.nodelogic_boot
-	reboot
-fi
-EOL
-cat /etc/rc.local >> /root/rc.local
-mv /root/rc.local /etc/rc.local
-chmod 755 /etc/rc.local
+#if [ ! -f /root/.nodelogic_boot ]; then 
+#	/root/bootstrap.sh
+#	touch /root/.nodelogic_boot
+#	reboot
+#fi
+#EOL
+#cat /etc/rc.local >> /root/rc.local
+#mv /root/rc.local /etc/rc.local
+#chmod 755 /etc/rc.local
 
-sed -e 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="net\.ifnames=0 biosdevname=0/' -i /etc/default/grub
+sed -e 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="net\.ifnames=0 nomodeset biosdevname=0/' -i /etc/default/grub
 
+#branding
+sed -e 's/\\S/NodeLogic 8/' -i /etc/issue
+chvt 1
 
 %end
 
 %packages
+@^minimal-environment
 biosdevname
 caching-nameserver
 chrony
-kexec-tools
-openssh-server
-wget
-lsof
+git
 iptables-services
-ntp
-ntpdate
+kexec-tools
+lsof
+openssh-server
+unzip
+wget
+-iwl6000g2a-firmware
+-iwl3160-firmware
+-iwl105-firmware
+-iwl6050-firmware
+-iwl6000-firmware
+-iwl5000-firmware
+-iwl2030-firmware
+-iwl135-firmware
+-iwl1000-firmware
+-iwl7260-firmware
+-iwl5150-firmware
+-iwl2000-firmware
+-iwl100-firmware
+
 
 %end
 
 %addon com_redhat_kdump --enable --reserve-mb='auto'
 
 %end
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+
 EOP
 }
 

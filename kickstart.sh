@@ -39,10 +39,14 @@ function ksPost() {
 %post --log=/root/nodelogic.log
 exec < /dev/tty3 > /dev/tty3
 chvt 3
+echo "#update system"
 dnf update -y
+
+echo "#security settings"
 sed -i "s/dnssec-validation yes/dnssec-validation no/" /etc/named.conf
 setenforce 0
 echo SELINUX=permissive > /etc/selinux/config
+
 if [ -e /etc/ssh/sshd_config ]; then
   #sed -e "/PermitRootLogin/d" -e "/Port 22/a Port 220" -i /etc/ssh/sshd_config
   echo "Port 22" >> /etc/ssh/sshd_config
@@ -104,30 +108,6 @@ COMMIT
 EOF
 
 chmod 600 /etc/sysconfig/iptables
-
-cat << EOG > /root/bootstrap.sh
-#!/bin/bash
-
-TGTDISKDEV=/dev/sdb
-TGTPARTDEV="1"
-
-sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk 
-  o # clear the in memory partition table
-  n # new partition
-  p # primary partition
-  1 # partition number 1
-    # default - start at beginning of disk
-    # default - extend partition to end of disk
-  p # print the in-memory partition table
-  t # set type
-    # default - first disk
-  31 # linux LVM
-  w # write the partition table
-  q # and we're done
-EOF
-pvcreate /dev/sdb1
-vgcreate cinder-volumes /dev/sdb1
-EOG
 
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 wget -O - https://api.nodelogic.net/v1/starterpack/openstack/checkin?nodeID=$NODEID

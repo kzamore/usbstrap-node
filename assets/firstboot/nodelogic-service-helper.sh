@@ -157,8 +157,27 @@ EOI
 function branding() {
 	echo "#branding"
 	cat << EOI > /etc/issue
-NodeLogic 8
-Authorize this instance at https://nodelogic.net/a/$NODEID
+oooo==+===oooo=+==ooooooooooooooooooooo=+=+=====oooooo===+==+=+==+==oo
+oo=o:  .+o===o:  ~ooooooooo==ooooooo=o+         .~+ooo=.           =oo
+oooo:    :===o:  ~o=oooooooo=ooooooooo+  .+++:~~   ~oo=   :++++++++ooo
+oo=o+     ~=oo:  ~o=oooooo=++=oooooo=o+  .=o==o=+.  :o=.  oo======oooo
+oo=o:  ~:  .+o:  ~o=ooo=o+    :ooooooo+  .====o=o:  .==.  ~~~.~~~~+ooo
+oo==+  ~o+   +:  ~o=ooooo~    .=oooo=o+  .=oo=o=o+  .==   ..~.~..~+ooo
+oo=o:  ~oo+.  .  ~o=oooooo+~~+=ooooo=o+  .ooooo=o~  ~o=   =ooo=ooooooo
+oo=o+  ~o=o=~    ~oooooooooooooooooooo+  .=====+~  .=o=.  +o========oo
+oo=o:  ~o=ooo:   ~o=oooooo====oooooo=o+          .~ooo=            ~o=
+oooo+::+o=ooo=+::+ooooo===oooo==oooooo=::::::::++=ooooo::::::::::::+oo
+ooooooooooooo=ooooooo=oooooo==oooo=ooooooo=ooooo=o=ooooooooooooooo=ooo
+oooo====oooooo===ooooo=+~~.   .~+=oooo============oooooo============oo
+ooooooooooooooooooo=o:.   ~~~~.   :=oooooooooooooooooooooooooooooooooo
+ooooooooooooooooooo=~  ~+=oo==o+~  .=ooooooooooooooooooooooooooooooooo
+ooooooooooooooooo=o~  ~o======ooo:  ~=oooooooooooooooooooooooooooooooo
+ooooooooooooooooo=o~  +o=oooooo===  .=oooooooooooooooooooooooooooooooo
+ooooooooooooooooo=o~  ~oooo===ooo:  ~ooooooooooooooooooooooooooooooooo
+oooooooooooooooooooo~  ~+oooooo+~  .+ooooooooooo               ooooooo
+oooooooooooooooooooo=:.   ~~~~.   ~=oooooooooooo  NODELOGIC 8  ooooooo
+oooooooooooooooooooooo=+~..   .~+=oooooooooooooo               ooooooo
+   Authorize this instance at https://nodelogic.net/a/$NODEID
 
 EOI
 	systemctl restart getty@tty1

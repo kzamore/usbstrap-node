@@ -41,7 +41,7 @@ exec < /dev/tty3 > /dev/tty3
 chvt 3
 
 mkdir -p /root/nodelogic
-curl https://raw.githubusercontent.com/kzamore/usbstrap-node/master/assets/install/kickstart.sh > /root/nodelogic/kickstart.sh
+curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/install/kickstart.sh > /root/nodelogic/kickstart.sh
 
 if [ -f /root/nodelogic/kickstart.sh ]; then
 	. /root/nodelogic/kickstart.sh

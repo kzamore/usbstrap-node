@@ -2,6 +2,10 @@
 
 #global vars should be defined ASAP, otherwise they should be exported from the function they run in
 #don't forget SSHKEYPUB, LANIPNET
+PATH=/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+HOME=/root
+LOGNAME=root
+USER=root
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 GATEWAY="$(ip r | grep default | grep eth0 | awk '{print $3}')"
 SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)

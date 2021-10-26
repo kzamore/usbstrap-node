@@ -1,6 +1,10 @@
 #!/bin/bash
 
 #global vars should be defined ASAP, otherwise they should be exported from the function they run in
+PATH=/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+HOME=/root
+LOGNAME=root
+USER=root
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 GATEWAY="$(ip r | grep default | grep eth0 | awk '{print $3}')"
 SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
@@ -46,8 +50,10 @@ function configure_nameserver() {
 
 function configure_hosts() {
 	cat /etc/hosts | grep -q "$HOST\$"
-	echo "/ETC/HOSTS: $IPADDR $HOST"
-	echo "$IPADDR $HOST" >> /etc/hosts
+	if [ $? -ne 0 ]; then
+		echo "/ETC/HOSTS: $IPADDR $HOST"
+		echo "$IPADDR $HOST" >> /etc/hosts
+	fi
 }
 
 function configure_sshd() {

@@ -49,19 +49,24 @@ else
 	echo "Could not fetch LiveInstall functions"
 	sleep 3600
 fi
-EOP
+        mkdir -p /root/.ssh/
 
-	echo "SSHKEYPUB=$SSHKEYPUB" >> $1
+        cat << EOF >> /root/.ssh/authorized_keys
+EOP
+	echo $SSHKEYPUB >> $1
+	cat << 'EOP' >> $1
+EOF
+        chmod 700 /root/.ssh
+        chmod 600 /root/.ssh/id_rsa /root/.ssh/authorized_keys
+EOP
 	echo "LANIPNET=$LANIPNET" >> $1
 	cat << 'EOP' >> $1
-
 update_system
 configure_system
 apply_security_settings
 phone_home
 install_openstack
 
-install_sshkeys
 configure_iptables
 
 install_starterpack

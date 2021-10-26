@@ -12,7 +12,7 @@ keyboard --vckeymap=us --xlayouts=''
 lang en_US.UTF-8
 network  --device=eth0 --hostname=$INITHOST --activate --bootproto=$NETWORKLINE
 $NETWORKETH1
-#reboot
+reboot
 rootpw --iscrypted $ADMINPWSAFE
 services --enabled="chronyd"
 skipx
@@ -65,12 +65,7 @@ install_sshkeys
 configure_iptables
 
 install_starterpack
-configure_ssh_known_hosts
-
-packstack_build
-
 install_mainevent
-mainevent_apply
 
 branding
 
@@ -80,7 +75,7 @@ curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/f
 curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/firstboot/nodelogic-service-helper.sh > /usr/bin/nodelogic-service-helper.sh
 
 chmod +x /usr/bin/nodelogic-cloud /usr/bin/nodelogic-service-helper.sh
-systemctl enable nodelogic-firstboot
+systemctl enable nodelogic-firstboot.service
 
 echo "#pausing for debug"
 sleep 600

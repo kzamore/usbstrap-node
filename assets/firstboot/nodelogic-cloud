@@ -11,6 +11,10 @@ fi
 
 . /usr/bin/nodelogic-service-helper.sh
 
+#when in doubt, let things settle
+update_getty "getting things ready"
+sleep 30
+
 #we should
 update_system
 update_getty "configuring system"

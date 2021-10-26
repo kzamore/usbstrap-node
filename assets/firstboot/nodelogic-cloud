@@ -1,0 +1,25 @@
+#!/bin/bash
+
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
+exec 1>/root/nodelogic-firstboot.log 2>&1
+
+if [ ! -f "/usr/bin/nodelogic-service-helper.sh" ]; then
+	echo "nodelogic-service-helper is missing, cannot continue"
+	exit 1
+fi
+
+. /usr/bin/nodelogic-service-helper.sh
+
+#we should
+update_system
+update_getty "configuring system"
+configure_nameserver
+configure_hosts
+configure_sshd
+configure_ssh_known_hosts
+packstack_build
+mainevent_apply
+branding
+
+systemctl disable nodelogic-firstboot

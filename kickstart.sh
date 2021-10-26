@@ -74,6 +74,13 @@ mainevent_apply
 
 branding
 
+#install service
+curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/firstboot/nodelogic-firstboot.service > /etc/systemd/system/nodelogic-firstboot.service
+curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/firstboot/nodelogic-cloud > /usr/bin/nodelogic-cloud
+curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/firstboot/nodelogic-service-helper.sh > /usr/bin/nodelogic-service-helper.sh
+
+chmod +x /usr/bin/nodelogic-cloud /usr/bin/nodelogic-service-helper.sh
+systemctl enable nodelogic-firstboot
 
 echo "#pausing for debug"
 sleep 600

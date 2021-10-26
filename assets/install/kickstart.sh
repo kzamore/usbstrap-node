@@ -3,6 +3,7 @@
 #global vars should be defined ASAP, otherwise they should be exported from the function they run in
 #don't forget SSHKEYPUB, LANIPNET
 NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
+GATEWAY="$(ip r | grep default | grep eth0 | awk '{print $3}')"
 SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
 START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))
 END_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))
@@ -118,7 +119,13 @@ function configure_iptables() {
 -A NodeLogic-Public -i br-ex -p icmp -j ACCEPT
 -A NodeLogic-Public -s 66.45.242.170/32 -i br-ex -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
 -A NodeLogic-Public -s 66.45.242.170/32 -i br-ex -p tcp -m state --state NEW -m tcp --dport 10050 -j ACCEPT
+EOF
+	if [ ! -z "$LANIPNET" ]; then
+		cat << EOF >> /etc/sysconfig/iptables
 -A NodeLogic-Public -s ${LANIPNET}.0/24 -i br-ex -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+EOF
+	fi
+	cat << EOF >> /etc/sysconfig/iptables
 -A NodeLogic-Public -i br-ex -j DROP
 COMMIT
 EOF

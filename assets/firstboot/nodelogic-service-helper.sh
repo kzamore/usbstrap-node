@@ -1,28 +1,28 @@
 #!/bin/bash
 
 #global vars should be defined ASAP, otherwise they should be exported from the function they run in
-PATH=/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-HOME=/root
-LOGNAME=root
-USER=root
-NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
-GATEWAY="$(ip r | grep default | grep eth0 | awk '{print $3}')"
-SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
-START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))
-END_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))
-IPADDR=$(ip a show dev eth0 | grep 'inet ' | awk '{print $2}' | grep -v '::' | cut -d'/' -f1)
-HOST=$(hostname)
+export PATH=/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+export HOME=/root
+export LOGNAME=root
+export USER=root
+export NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
+export GATEWAY="$(ip r | grep default | grep eth0 | awk '{print $3}')"
+export SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
+export START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))
+export END_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))
+export IPADDR=$(ip a show dev eth0 | grep 'inet ' | awk '{print $2}' | grep -v '::' | cut -d'/' -f1)
+export HOST=$(hostname)
 	
-MAINEVENT_GIT_URL="https://github.com/kzamore/mainevent"
-MAINEVENT_INSTALL_PATH=/root/mainevent
-TERRAFORM_VERSION="1.0.1"
-TERRAFORM_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
-STARTERPACK_PATH=/root/starterpack/files
-PACKSTACK_ZIP_URL=https://github.com/kzamore/starterpack/archive/refs/heads/master.zip
-PACKSTACK_ANSWER_TEMPLATE_URL=https://raw.githubusercontent.com/kzamore/starterpack/master/openstack/files/dmzcloud.ans.template
-PACKSTACK_ANSWER_TEMPLATE_PATH=${STARTERPACK_PATH}/dmzcloud.ans.template
-NODELOGIC_CHECKIN_URL="https://api.nodelogic.net/v1/node/checkin?nodeID=$NODEID"
-NODELOGIC_STARTERPACK_DOWNLOAD_URL="https://api.nodelogic.net/v1/starterpack/openstack/download?nodeID=$NODEID"
+export MAINEVENT_GIT_URL="https://github.com/kzamore/mainevent"
+export MAINEVENT_INSTALL_PATH=/root/mainevent
+export TERRAFORM_VERSION="1.0.1"
+export TERRAFORM_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+export STARTERPACK_PATH=/root/starterpack/files
+export PACKSTACK_ZIP_URL=https://github.com/kzamore/starterpack/archive/refs/heads/master.zip
+export PACKSTACK_ANSWER_TEMPLATE_URL=https://raw.githubusercontent.com/kzamore/starterpack/master/openstack/files/dmzcloud.ans.template
+export PACKSTACK_ANSWER_TEMPLATE_PATH=${STARTERPACK_PATH}/dmzcloud.ans.template
+export NODELOGIC_CHECKIN_URL="https://api.nodelogic.net/v1/node/checkin?nodeID=$NODEID"
+export NODELOGIC_STARTERPACK_DOWNLOAD_URL="https://api.nodelogic.net/v1/starterpack/openstack/download?nodeID=$NODEID"
 
 #we should
 # update_system

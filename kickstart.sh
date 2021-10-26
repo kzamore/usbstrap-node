@@ -83,7 +83,7 @@ chmod +x /usr/bin/nodelogic-cloud /usr/bin/nodelogic-service-helper.sh
 systemctl enable nodelogic-firstboot.service
 
 echo "#pausing for debug"
-sleep 600
+sleep 60
 
 chvt 1
 

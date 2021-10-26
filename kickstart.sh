@@ -82,8 +82,7 @@ curl https://raw.githubusercontent.com/kzamore/usbstrap-node/motocenter/assets/f
 chmod +x /usr/bin/nodelogic-cloud /usr/bin/nodelogic-service-helper.sh
 systemctl enable nodelogic-firstboot.service
 
-echo "#pausing for debug"
-sleep 60
+sleep 10
 
 chvt 1
 

@@ -1,11 +1,14 @@
 [Unit]
 Description=NodeLogic Cloud Deployment Service
-After=syslog.target network.target remote-fs.target nss-lookup.target sshd.target NetworkManager.service iptables.service sssd.service
+After=syslog.target network.target remote-fs.target nss-lookup.target sshd.target NetworkManager.service iptables.service sssd.service 
 Requires=syslog.target network.target remote-fs.target nss-lookup.target sshd.target NetworkManager.service iptables.service sssd.service 
 
 [Service]
 Type=oneshot
+ExecStartPre=/bin/sh -c 'until ping -c1 8.8.8.8; do sleep 1; done;'
 ExecStart=/usr/bin/nodelogic-cloud
+User=root
+WorkingDirectory=/root
 
 [Install]
 WantedBy=multi-user.target

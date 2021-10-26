@@ -157,27 +157,27 @@ EOI
 function branding() {
 	echo "#branding"
 	cat << EOI > /etc/issue
-oooo==+===oooo=+==ooooooooooooooooooooo=+=+=====oooooo===+==+=+==+==oo
-oo=o:  .+o===o:  ~ooooooooo==ooooooo=o+         .~+ooo=.           =oo
-oooo:    :===o:  ~o=oooooooo=ooooooooo+  .+++:~~   ~oo=   :++++++++ooo
-oo=o+     ~=oo:  ~o=oooooo=++=oooooo=o+  .=o==o=+.  :o=.  oo======oooo
-oo=o:  ~:  .+o:  ~o=ooo=o+    :ooooooo+  .====o=o:  .==.  ~~~.~~~~+ooo
-oo==+  ~o+   +:  ~o=ooooo~    .=oooo=o+  .=oo=o=o+  .==   ..~.~..~+ooo
-oo=o:  ~oo+.  .  ~o=oooooo+~~+=ooooo=o+  .ooooo=o~  ~o=   =ooo=ooooooo
-oo=o+  ~o=o=~    ~oooooooooooooooooooo+  .=====+~  .=o=.  +o========oo
-oo=o:  ~o=ooo:   ~o=oooooo====oooooo=o+          .~ooo=            ~o=
-oooo+::+o=ooo=+::+ooooo===oooo==oooooo=::::::::++=ooooo::::::::::::+oo
-ooooooooooooo=ooooooo=oooooo==oooo=ooooooo=ooooo=o=ooooooooooooooo=ooo
-oooo====oooooo===ooooo=+~~.   .~+=oooo============oooooo============oo
-ooooooooooooooooooo=o:.   ~~~~.   :=oooooooooooooooooooooooooooooooooo
-ooooooooooooooooooo=~  ~+=oo==o+~  .=ooooooooooooooooooooooooooooooooo
-ooooooooooooooooo=o~  ~o======ooo:  ~=oooooooooooooooooooooooooooooooo
-ooooooooooooooooo=o~  +o=oooooo===  .=oooooooooooooooooooooooooooooooo
-ooooooooooooooooo=o~  ~oooo===ooo:  ~ooooooooooooooooooooooooooooooooo
-oooooooooooooooooooo~  ~+oooooo+~  .+ooooooooooo               ooooooo
-oooooooooooooooooooo=:.   ~~~~.   ~=oooooooooooo  NODELOGIC 8  ooooooo
-oooooooooooooooooooooo=+~..   .~+=oooooooooooooo               ooooooo
-   Authorize this instance at https://nodelogic.net/a/$NODEID
+    oooo==+===oooo=+==ooooooooooooooooooooo=+=+=====oooooo===+==+=+==+==ooo
+    oo=o:  .+o===o:  ~ooooooooo==ooooooo=o+         .~+ooo=.           =ooo
+    oooo:    :===o:  ~o=oooooooo=ooooooooo+  .+++:~~   ~oo=   :++++++++oooo
+    oo=o+     ~=oo:  ~o=oooooo=++=oooooo=o+  .=o==o=+.  :o=.  oo======ooooo
+    oo=o:  ~:  .+o:  ~o=ooo=o+    :ooooooo+  .====o=o:  .==.  ~~~.~~~~+oooo
+    oo==+  ~o+   +:  ~o=ooooo~    .=oooo=o+  .=oo=o=o+  .==   ..~.~..~+oooo
+    oo=o:  ~oo+.  .  ~o=oooooo+~~+=ooooo=o+  .ooooo=o~  ~o=   =ooo=oooooooo
+    oo=o+  ~o=o=~    ~oooooooooooooooooooo+  .=====+~  .=o=.  +o========ooo
+    oo=o:  ~o=ooo:   ~o=oooooo====oooooo=o+          .~ooo=            ~o=o
+    oooo+::+o=ooo=+::+ooooo===oooo==oooooo=::::::::++=ooooo::::::::::::+ooo
+    ooooooooooooo=ooooooo=oooooo==oooo=ooooooo=ooooo=o=ooooooooooooooo=oooo
+    oooo====oooooo===ooooo=+~~.   .~+=oooo============oooooo============ooo
+    ooooooooooooooooooo=o:.   ~~~~.   :=ooooooooooooooooooooooooooooooooooo
+    ooooooooooooooooooo=~  ~+=oo==o+~  .=oooooooooooooooooooooooooooooooooo
+    ooooooooooooooooo=o~  ~o======ooo:  ~=ooooooooooooooooooooooooooooooooo
+    ooooooooooooooooo=o~  +o=oooooo===  .=oooooooooo               oooooooo
+    ooooooooooooooooo=o~  ~oooo===ooo:  ~ooooooooooo  NODELOGIC 8  oooooooo
+    oooooooooooooooooooo~  ~+oooooo+~  .+ooooooooooo               oooooooo
+    oooooooooooooooooooo=:.   ~~~~.   ~=ooooooooooooooooooooooooooooooooooo
+    oooooooooooooooooooooo=+~..   .~+=ooooooooooooooooooooooooooooooooooooo
+    Authorize this instance at https://nodelogic.net/a/$NODEID
 
 EOI
 	systemctl restart getty@tty1

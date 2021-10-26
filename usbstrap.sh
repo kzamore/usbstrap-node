@@ -200,10 +200,7 @@ sudo mount ${CENTOSDVD} DVD
 echo "Bootstrap deploying..."
 sudo cp -av DVD/isolinux/* BOOT
 sudo cp -av /usr/lib/syslinux/modules/bios/menu.c32 BOOT
-#sudo cp -av /usr/lib/syslinux/modules/bios/{libcom32,libutil,menu,vesamenu}.c32 BOOT
 sudo mv BOOT/isolinux.cfg BOOT/syslinux.cfg
-#sudo mkdir BOOT/LiveOS
-#sudo cp -av DVD/LiveOS/squashfs.img BOOT/LiveOS
 sudo mkdir BOOT/images
 sudo cp -av DVD/images/install.img BOOT/images
 sudo cp -av default/* BOOT

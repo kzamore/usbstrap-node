@@ -223,7 +223,7 @@ function branding() {
 	echo "#branding"
 	cat << EOI > /etc/issue
 NodeLogic 8
-Authorize this instance at https://nodelogic.net/a/$NODEID
+Please wait as this instance comes online
 
 EOI
 }

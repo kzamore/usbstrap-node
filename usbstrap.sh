@@ -1,8 +1,12 @@
 #!/bin/bash
 
-echo "To avoid delays, consider running 'sudo ls' before running this script"
+echo "# USBSTRAP[8]-node"
+echo "Bootstrapping made easy."
 sleep 1
 
+echo "## Parameters"
+RERUNVARS="BOOTSTRAP_VMTYPE IPADDR NETMASK GATEWAY DNS  INITHOST  LANIPADDR LANNETMASK LANIPNET ADMINUSER  SSHKEY CENTOSURL TIMEZONE"
+#if you add or remove something 👇 then don't forget to do the same 👆
 if [ -z "$BOOTSTRAP_DEPLOYTYPE" ]; then
 	BOOTSTRAP_DEPLOYTYPE="node"
 fi
@@ -125,26 +129,34 @@ else
 	NETWORKLINE2="dhcp "
 fi
 
-mkdir -p output 2> /dev/null
+#coming soon
+#mkdir -p output 2> /dev/null
+#for f in $RERUNVARS; do 
+	reruntip="$f=\$${f} $reruntip"
+#done
+#reruntip="$reruntip \$0"
+reruntip2="BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET ADMINUSER=$ADMINUSER SSHKEY=$SSHKEY CENTOSURL=$CENTOSURL TIMEZONE=$TIMEZONE $0"
 echo ""
 echo "Rerun Tip:"
-echo "=========================================================="
+echo "\`\`\`=========================================================="
 echo ""
-echo "BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET $0"
+echo $reruntip2
 echo '#!/bin/bash' > output/bootstrap.sh
 echo '#this script was automatically generated to quickly recreate the last image' > output/bootstrap.sh
-echo "BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET $0" >> output/bootstrap.sh
+echo $reruntip2 >> output/bootstrap.sh
 chmod +x output/bootstrap.sh
 echo ""
-echo "=========================================================="
+echo "==========================================================\`\`\`"
 echo ""
 
-echo "Prereqs.."
+echo "### Prereqs.."
 APT=`which apt`
 if [ -z "$APT" ]; then
-sudo yum install -y syslinux pv qemu-img aria2
+	echo "CentOS detected (WARNING: untested)"
+	sudo yum install -y syslinux pv qemu-img aria2
 else
-sudo apt install -y syslinux pv qemu-utils  aria2
+	echo "Ubuntu/Debian detected"
+	sudo apt install -y syslinux pv qemu-utils  aria2
 fi
 
 if [ -f bootstrap.img ]; then
@@ -167,7 +179,7 @@ echo "cached $(ls -l ${CENTOSDVD})"
 fi
 
 
-echo  "Image creation.."
+echo  "### Image creation.."
 dd if=/dev/zero of=bootstrap.img bs=1 count=0 seek=${TGTSIZE}
 echo "n
 
@@ -182,30 +194,31 @@ n
 
 
 
-w" | fdisk bootstrap.img
+w" | fdisk bootstrap.img 1>&2
+#this seems dangerous. it may have accidentally blown away one of my boot disks. this software does not come with any warranty
 LOOPDEV=$(losetup -f)
-sudo losetup -P $LOOPDEV  bootstrap.img 
+sudo losetup -P $LOOPDEV  bootstrap.img 1>&2
 #LOOPDEV=$(losetup -a | grep bootstrap | awk -F':' '{print $1}')
 
-sudo mkfs -t vfat -n "BOOT" ${LOOPDEV}p1
-sudo mkfs -L "DATA" ${LOOPDEV}p2
+sudo mkfs -t vfat -n "BOOT" ${LOOPDEV}p1 1>&2
+sudo mkfs -L "DATA" ${LOOPDEV}p2 1>&2
 
-echo "Installing syslinux"
-sudo dd conv=notrunc bs=440 count=1 if=/usr/lib/SYSLINUX/mbr.bin of=${LOOPDEV}
-sudo syslinux -i ${LOOPDEV}p1
+echo "### Installing syslinux"
+sudo dd conv=notrunc bs=440 count=1 if=/usr/lib/SYSLINUX/mbr.bin of=${LOOPDEV} 1>&2
+sudo syslinux -i ${LOOPDEV}p1 1>&2
 
-mkdir BOOT DATA DVD
-sudo mount ${LOOPDEV}p1 BOOT
-sudo mount ${LOOPDEV}p2 DATA
-sudo mount ${CENTOSDVD} DVD
+mkdir BOOT DATA DVD 1>&2
+sudo mount ${LOOPDEV}p1 BOOT 1>&2
+sudo mount ${LOOPDEV}p2 DATA 1>&2
+sudo mount ${CENTOSDVD} DVD 1>&2
 
-echo "Bootstrap deploying..."
-sudo cp -av DVD/isolinux/* BOOT
-sudo cp -av /usr/lib/syslinux/modules/bios/menu.c32 BOOT
-sudo mv BOOT/isolinux.cfg BOOT/syslinux.cfg
-sudo mkdir BOOT/images
-sudo cp -av DVD/images/install.img BOOT/images
-sudo cp -av default/* BOOT
+echo "### Adding isolinux and syslinux modules"
+sudo cp -av DVD/isolinux/* BOOT 1>&2
+sudo cp -av /usr/lib/syslinux/modules/bios/menu.c32 BOOT 1>&2
+sudo mv BOOT/isolinux.cfg BOOT/syslinux.cfg 1>&2
+sudo mkdir BOOT/images 1>&2
+sudo cp -av DVD/images/install.img BOOT/images 1>&2
+sudo cp -av default/* BOOT 1>&2
 BOOTSTRAP_DEPLOYTYPE=".${BOOTSTRAP_DEPLOYTYPE}"
 
 
@@ -216,11 +229,12 @@ if [ ! -z "$LANIPADDR" ]; then
 	NETWORKETH1="network  --bootproto=static --device=eth1                      --ip=${LANIPADDR}                      --netmask=${LANNETMASK} --activate"
 fi
 
+echo "### Creating kickstart config"
 ksHeader output/bootstrap.ks
 ksPost output/bootstrap.ks
-sudo cp output/bootstrap.ks BOOT/ks.cfg
-sudo cp output/bootstrap.ks DATA/ks.cfg
-sudo cp assets/bootassets/* BOOT
+sudo cp output/bootstrap.ks BOOT/ks.cfg 1>&2
+sudo cp output/bootstrap.ks DATA/ks.cfg 1>&2
+sudo cp assets/bootassets/* BOOT 1>&2
 
 #BOOTSTRAP_FILE="BOOT/ks.cfg${BOOTSTRAP_DEPLOYTYPE}.template"
 #if [ -f "${BOOTSTRAP_FILE}" ]; then
@@ -228,7 +242,8 @@ sudo cp assets/bootassets/* BOOT
 # cp BOOT/ks.cfg output/bootstrap.ks
 #fi
 
-cat << EOF | sudo tee  BOOT/syslinux.cfg
+echo "### Writing syslinux config"
+cat << EOF | sudo tee  BOOT/syslinux.cfg 1>&2
 default vesamenu.c32
 #prompt 1
 timeout 10
@@ -345,17 +360,17 @@ menu end
 
 EOF
 
-echo "Cleaning up.."
+echo "### Cleaning up"
 for d in BOOT DATA; do 
-sudo du -h --max-depth=1 $d
-sudo umount $d && sudo rm -rf $d
+sudo du -h --max-depth=1 $d 1>&2
+sudo umount $d && sudo rm -rf $d 1>&2
 done
-sudo umount DVD && sudo rm -rf DVD
+sudo umount DVD && sudo rm -rf DVD 1>&2
 
-sudo losetup -d ${LOOPDEV}
+sudo losetup -d ${LOOPDEV} 1>&2
 
 if [ "$BOOTSTRAP_VMTYPE" != "none" ]; then
 	echo "Creating VM image..."
 	qemu-img convert -p -f raw -O $BOOTSTRAP_VMTYPE bootstrap.img bootstrap.$BOOTSTRAP_VMTYPE
 fi
-echo "Use bootstrap.img to start NodeLogic"
+echo "** Use bootstrap.img to start NodeLogic **"

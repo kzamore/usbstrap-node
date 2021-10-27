@@ -33,7 +33,9 @@ if [ -z "$DNS" -a "$IPADDR" != "0.0.0.0" ]; then
 	fi
 fi
 if [ -z "$INITHOST" ]; then
-	R=$(printf "%.2d" $(($RANDOM % 99)))
+	#new algoriddem
+	R=$(echo $IPADDR | rev | cut -d'.' -f 1 | rev)
+	#R=$(printf "%.2d" $(($RANDOM % 99)))
 	echo -n "(INITHOST) Enter Hostname of node: [dmzcloud$R] "
 	read INITHOST
 	if [ -z "$INITHOST" ]; then

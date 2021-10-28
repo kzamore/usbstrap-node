@@ -8,8 +8,9 @@ export USER=root
 export NODEID=`hostid | tr '[:lower:]' '[:upper:]'`
 export GATEWAY="$(ip r | grep default | grep eth0 | awk '{print $3}')"
 export SUBNET_CIDR=$(ip r | grep eth0 | awk '{print $1}' | grep -v default)
-export START_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))
-export END_ADDR=$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))
+export SUBNET="$(echo $SUBNET_CIDR | cut -d '.' -f -3)."
+export START_ADDR="${SUBNET}$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))"
+export END_ADDR="${SUBNET}$(( $(echo $SUBNET_CIDR | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 6 ))"
 export IPADDR=$(ip a show dev eth0 | grep 'inet ' | awk '{print $2}' | grep -v '::' | cut -d'/' -f1)
 export HOST=$(hostname)
 	

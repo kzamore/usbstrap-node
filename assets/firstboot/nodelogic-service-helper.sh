@@ -35,6 +35,12 @@ export NODELOGIC_STARTERPACK_DOWNLOAD_URL="https://api.nodelogic.net/v1/starterp
 # packstack_build
 # mainevent_apply
 # branding
+# configure_final
+
+function configure_final() {
+	systemctl disable NetworkManager
+	systemctl enable network
+}
 
 function update_system() {
 	update_getty "updating system"

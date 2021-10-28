@@ -25,5 +25,6 @@ configure_ssh_known_hosts
 packstack_build
 mainevent_apply
 branding
+configure_final 
 
 systemctl disable nodelogic-firstboot

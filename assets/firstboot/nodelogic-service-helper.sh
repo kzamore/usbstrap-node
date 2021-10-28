@@ -149,6 +149,13 @@ EOR
 
 	../terraform init
 	../terraform apply -var-file="deploy.tfvars" -auto-approve
+	result=$?
+	if [ $result -ne 0 ]; then
+		echo "terraform apply still has missing steps ($result)"
+		../terraform apply -var-file="deploy.tfvars" -auto-approve
+		result=$?
+		if [ $result -ne 0 ]; then echo "terraform apply failed twice ($result)"; fi
+	fi
 }
 
 function update_getty() {

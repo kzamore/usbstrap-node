@@ -32,6 +32,10 @@ function update_system() {
 
 function configure_system() {
 	sed -e 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="net\.ifnames=0 nomodeset biosdevname=0/' -i /etc/default/grub
+	cat << EOF > /etc/security/limits.d/mysql.conf
+mysql soft nofile 3000
+mysql hard nofile 4000
+EOF
 }
 
 function apply_security_settings() {

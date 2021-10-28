@@ -235,4 +235,7 @@ NodeLogic 8
 Please wait as this instance comes online
 
 EOI
+	sed -e '/^GRUB_DISTRIBUTOR=/d' -i /etc/default/grub
+	echo "GRUB_DISTRIBUTOR=NodeLogic" >> /etc/default/grub
+	grub2-mkconfig -o /boot/grub2/grub.cfg
 }

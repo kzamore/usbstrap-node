@@ -155,7 +155,7 @@ function configure_ssh_known_hosts() {
 }
 function patch_neutron_openvswitch() { 
 	TMPFILE=$(mktemp -p /root)
-cat << 'EOF' > $TMPFILE
+	cat << 'EOF' > $TMPFILE
 323a324,328
 >         if namespace is None:
 >             self.ipv4['filter'].add_rule('INPUT', '-j NodeLogic-Public',
@@ -168,6 +168,7 @@ EOF
 	if [ $? -eq 0 ]; then
     		patch /usr/lib/python3.6/site-packages/neutron/agent/linux/iptables_manager.py < $TMPFILE
     		service neutron-openvswitch-agent restart
+			rm $TMPFILE
 	else
     		echo "Cannot patch neutron ovs agent, firewalling on this host may be compromised"
 	fi

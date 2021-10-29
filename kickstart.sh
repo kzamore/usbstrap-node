@@ -99,6 +99,7 @@ iptables-services
 kexec-tools
 lsof
 openssh-server
+patch
 unzip
 wget
 -iwl6000g2a-firmware

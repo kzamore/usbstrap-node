@@ -150,7 +150,7 @@ echo "\`\`\`=========================================================="
 echo ""
 echo $reruntip2
 echo '#!/bin/bash' > output/bootstrap.sh
-echo '#this script was automatically generated to quickly recreate the last image' > output/bootstrap.sh
+echo '#this script was automatically generated to quickly recreate the last image' >> output/bootstrap.sh
 echo $reruntip2 >> output/bootstrap.sh
 chmod +x output/bootstrap.sh
 echo ""

@@ -24,11 +24,11 @@ zerombr
 clearpart --all --initlabel
 part biosboot --fstype=biosboot --size=1 --ondisk=sda
 part /boot --fstype="ext4" --size=5000 --ondisk=sda
-part pv.01 --size=112500 --ondisk=sda
+part pv.01 --size=100500 --ondisk=sda
 part pv.02 --ondisk=sda --size=50 --grow
 volgroup vg-01 pv.01
 volgroup cinder-volumes pv.02
-logvol /  --fstype="ext4" --size=102400 --name=root --vgname=vg-01
+logvol /  --fstype="ext4" --size=91800 --name=root --vgname=vg-01
 logvol swap  --size=8192 --name=swap --vgname=vg-01
 
 EOF

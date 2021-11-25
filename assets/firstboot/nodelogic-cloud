@@ -22,8 +22,8 @@ configure_nameserver
 configure_hosts
 configure_sshd
 configure_ssh_known_hosts
-packstack_build
-mainevent_apply
+#packstack_build
+#mainevent_apply
 branding
 configure_final 
 

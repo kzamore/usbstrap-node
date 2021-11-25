@@ -2,6 +2,7 @@
 
 echo "# USBSTRAP[8]-node"
 echo "Bootstrapping made easy."
+mkdir -p output 2>&1 > /dev/null 
 sleep 1
 
 echo "## Parameters"

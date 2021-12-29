@@ -19,10 +19,16 @@ mkdir -p output 2>&1 > /dev/null
 sleep 1
 
 echo "## Parameters"
-RERUNVARS="BOOTSTRAP_VMTYPE IPADDR NETMASK GATEWAY DNS  INITHOST  LANIPADDR LANNETMASK LANIPNET ADMINUSER  SSHKEY CENTOSURL CENTOSVER TIMEZONE START_ADDR END_ADDR"
+RERUNVARS="BOOTSTRAP_VMTYPE IPADDR NETMASK GATEWAY DNS  INITHOST  LANIPADDR LANNETMASK LANIPNET ADMINUSER  SSHKEY CENTOSURL CENTOSVER TIMEZONE START_ADDR END_ADDR BOOTSTRAP_DEPLOYTYPE"
 #if you add or remove something 👇 then don't forget to do the same 👆
+BOOTSTRAP_DEPLOYTYPE="controller"
 if [ -z "$BOOTSTRAP_DEPLOYTYPE" ]; then
-	BOOTSTRAP_DEPLOYTYPE="node"
+	DEF="openstack-controller"
+	echo -n "(BOOTSTRAP_DEPLOYTYPE) Type of node to build: [$DEF] "
+	read BOOTSTRAP_DEPLOYTYPE
+	if [ -z "$BOOTSTRAP_DEPLOYTYPE" ]; then
+		BOOTSTRAP_DEPLOYTYPE=$DEF
+	fi
 fi
 
 if [ -z "$BOOTSTRAP_VMTYPE" ]; then
@@ -350,6 +356,10 @@ menu color cmdline 0 #ffffffff #00000000 none
 
 menu separator # insert an empty line
 menu separator # insert an empty line
+label nodelogic-controller
+  menu label ^Kickstart Nodelogic (Controller Deploy)
+  kernel vmlinuz
+  append initrd=initrd.img nomodeset net.ifnames=0 biosdevname=0 inst.stage2=hd:LABEL=BOOT  inst.ks=hd:LABEL=DATA:/ks.cfg openstack-controller
 
 label nodelogic
   menu label ^Kickstart Nodelogic (Node Deploy)

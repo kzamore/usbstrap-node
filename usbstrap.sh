@@ -1,12 +1,25 @@
 #!/bin/bash
 
+getSubnet() {
+IFS=. read -r i1 i2 i3 i4 <<< $1
+IFS=. read -r m1 m2 m3 m4 <<< $2
+printf "%d.%d.%d.%d\n" "$((i1 & m1))" "$((i2 & m2))" "$((i3 & m3))" "$((i4 & m4))"
+}
+
+CIDR () {
+   c=0 x=0$( printf '%o' ${1//./ } )
+   while [ $x -gt 0 ]; do
+       let c+=$((x%2)) 'x>>=1'
+   done
+   echo /$c ; }
+
 echo "# USBSTRAP[8]-node"
 echo "Bootstrapping made easy."
 mkdir -p output 2>&1 > /dev/null 
 sleep 1
 
 echo "## Parameters"
-RERUNVARS="BOOTSTRAP_VMTYPE IPADDR NETMASK GATEWAY DNS  INITHOST  LANIPADDR LANNETMASK LANIPNET ADMINUSER  SSHKEY CENTOSURL CENTOSVER TIMEZONE"
+RERUNVARS="BOOTSTRAP_VMTYPE IPADDR NETMASK GATEWAY DNS  INITHOST  LANIPADDR LANNETMASK LANIPNET ADMINUSER  SSHKEY CENTOSURL CENTOSVER TIMEZONE START_ADDR END_ADDR"
 #if you add or remove something 👇 then don't forget to do the same 👆
 if [ -z "$BOOTSTRAP_DEPLOYTYPE" ]; then
 	BOOTSTRAP_DEPLOYTYPE="node"
@@ -29,6 +42,30 @@ fi
 if [ -z "$GATEWAY" -a "$IPADDR" != "0.0.0.0" ]; then
 	echo -n "(GATEWAY) Enter Gateway IP Address: "
 	read GATEWAY
+fi
+if [ -z "$SUBNET" ]; then
+	DEF="$(getSubnet $IPADDR $NETMASK)/$(CIDR $NETMASK)"
+	echo -n "(SUBNET) Enter Floating IP Subnet: [$DEF] "
+	read $SUBNET
+	if [ -z "$SUBNET" ]; then
+		SUBNET=$DEF
+	fi
+fi
+if [ -z "$START_ADDR" ]; then
+	DEF="$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))"
+	echo -n "(START_ADDR) Enter Floating IP Subnet: [$DEF] "
+	read $START_ADDR
+	if [ -z "$START_ADDR" ]; then
+		START_ADDR=$DEF
+	fi
+fi
+if [ -z "$END_ADDR" ]; then
+	DEF="$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 7 ))"
+	echo -n "(END_ADDR) Enter Floating IP Ending Address: [$DEF] "
+	read $END_ADDR
+	if [ -z "$END_ADDR" ]; then
+		END_ADDR=$DEF
+	fi
 fi
 if [ -z "$DNS" -a "$IPADDR" != "0.0.0.0" ]; then
 	echo -n "(DNS) Enter DNS IP Address: [8.8.8.8] "

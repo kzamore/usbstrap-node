@@ -50,7 +50,7 @@ if [ -z "$GATEWAY" -a "$IPADDR" != "0.0.0.0" ]; then
 	read GATEWAY
 fi
 if [ -z "$SUBNET" ]; then
-	DEF="$(getSubnet $IPADDR $NETMASK)/$(CIDR $NETMASK)"
+	DEF="$(getSubnet $IPADDR $NETMASK)$(CIDR $NETMASK)"
 	echo -n "(SUBNET) Enter Floating IP Subnet: [$DEF] "
 	read $SUBNET
 	if [ -z "$SUBNET" ]; then
@@ -58,7 +58,8 @@ if [ -z "$SUBNET" ]; then
 	fi
 fi
 if [ -z "$START_ADDR" ]; then
-	DEF="$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))"
+	S=$( echo $SUBNET | cut -d '.' -f -3)
+	DEF="$S.$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))"
 	echo -n "(START_ADDR) Enter Floating IP Subnet: [$DEF] "
 	read $START_ADDR
 	if [ -z "$START_ADDR" ]; then
@@ -66,7 +67,8 @@ if [ -z "$START_ADDR" ]; then
 	fi
 fi
 if [ -z "$END_ADDR" ]; then
-	DEF="$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 7 ))"
+	S=$( echo $SUBNET | cut -d '.' -f -3)
+	DEF="$S.$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 7 ))"
 	echo -n "(END_ADDR) Enter Floating IP Ending Address: [$DEF] "
 	read $END_ADDR
 	if [ -z "$END_ADDR" ]; then

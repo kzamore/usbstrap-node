@@ -73,17 +73,17 @@ configure_system
 apply_security_settings
 phone_home
 
+install_openstack
+configure_iptables
+
 grep -q openstack-controller /proc/cmdline
 if [ $? -eq 0 ]; then
-install_openstack
-
-configure_iptables
 
 install_starterpack
 install_mainevent
 touch /root/.nodelogic-openstack-controller
 else
-configure_iptables
+touch /root/.nodelogic-openstack-compute
 fi
 
 branding

@@ -172,6 +172,11 @@ EOI
 
 function branding() {
 	echo "#branding"
+	if [ -f /root/.nodelogic-openstack-controller ]; then
+		text="controller"
+	else
+		text="instance"
+	fi
 	cat << EOI > /etc/issue
     oooo==+===oooo=+==ooooooooooooooooooooo=+=+=====oooooo===+==+=+==+==ooo
     oo=o:  .+o===o:  ~ooooooooo==ooooooo=o+         .~+ooo=.           =ooo
@@ -193,7 +198,7 @@ function branding() {
     oooooooooooooooooooo~  ~+oooooo+~  .+ooooooooooo               oooooooo
     oooooooooooooooooooo=:.   ~~~~.   ~=ooooooooooooooooooooooooooooooooooo
     oooooooooooooooooooooo=+~..   .~+=ooooooooooooooooooooooooooooooooooooo
-    Authorize this instance at https://nodelogic.net/a/$NODEID
+    Authorize this $text at https://nodelogic.net/a/$NODEID
 
 EOI
 	systemctl restart getty@tty1

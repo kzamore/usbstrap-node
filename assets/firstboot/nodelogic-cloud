@@ -22,8 +22,10 @@ configure_nameserver
 configure_hosts
 configure_sshd
 configure_ssh_known_hosts
+if [ -f /root/.nodelogic-openstack-controller ]; then
 packstack_build
 mainevent_apply
+fi
 branding
 configure_final 
 

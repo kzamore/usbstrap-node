@@ -51,6 +51,13 @@ else
 fi
         mkdir -p /root/.ssh/
 
+	cat << EOF > /root/.global.vars
+EOP
+	echo "SUBNET_CIDR=$SUBNET" >> $1
+	echo "START_ADDR=$START_ADDR" >> $1
+	echo "END_ADDR=$END_ADDR" >> $1
+	cat << 'EOP' >> $1
+EOF
         cat << EOF >> /root/.ssh/authorized_keys
 EOP
 	echo $SSHKEYPUB >> $1

@@ -1,17 +1,5 @@
 #!/bin/bash
 
-getSubnet() {
-IFS=. read -r i1 i2 i3 i4 <<< $1
-IFS=. read -r m1 m2 m3 m4 <<< $2
-printf "%d.%d.%d.%d\n" "$((i1 & m1))" "$((i2 & m2))" "$((i3 & m3))" "$((i4 & m4))"
-}
-
-CIDR () {
-   c=0 x=0$( printf '%o' ${1//./ } )
-   while [ $x -gt 0 ]; do
-       let c+=$((x%2)) 'x>>=1'
-   done
-   echo /$c ; }
 
 echo "# USBSTRAP[8]-node"
 echo "Bootstrapping made easy."
@@ -19,189 +7,39 @@ mkdir -p output 2>&1 > /dev/null
 sleep 1
 
 echo "## Parameters"
-RERUNVARS="BOOTSTRAP_VMTYPE IPADDR NETMASK GATEWAY DNS  INITHOST  LANIPADDR LANNETMASK LANIPNET ADMINUSER  SSHKEY CENTOSURL CENTOSVER TIMEZONE START_ADDR END_ADDR BOOTSTRAP_DEPLOYTYPE"
-#if you add or remove something 👇 then don't forget to do the same 👆
-BOOTSTRAP_DEPLOYTYPE="controller"
-if [ -z "$BOOTSTRAP_DEPLOYTYPE" ]; then
-	DEF="openstack-controller"
-	echo -n "(BOOTSTRAP_DEPLOYTYPE) Type of node to build: [$DEF] "
-	read BOOTSTRAP_DEPLOYTYPE
-	if [ -z "$BOOTSTRAP_DEPLOYTYPE" ]; then
-		BOOTSTRAP_DEPLOYTYPE=$DEF
+CENTOS_URL="http://repos.dfw.quadranet.com/centos/8-stream"
+
+if [ -z "$KICKSTART_FILE" ]; then
+	echo -n "(KICKSTART_FILE) Path to kickstart file: "
+	read KICKSTART_FILE
+	if [ -z "$KICKSTART_FILE" ]; then
+		echo "Kickstart file required"
+		exit 1
+	fi
+	if [ ! -f $KICKSTART_FILE ]; then
+	    echo "Need a kickstart file"
+		exit 1
+	fi
+fi
+
+if [ -z "$OUTPUT_FILE" ]; then
+	echo -n "(OUTPUT_FILE) Path to image file: "
+	read OUTPUT_FILE
+	if [ -z "$OUTPUT_FILE" ]; then
+		OUTPUT_FILE=bootstrap.img
 	fi
 fi
 
 if [ -z "$BOOTSTRAP_VMTYPE" ]; then
 	BOOTSTRAP_VMTYPE=none
 fi
-if [ -z "$IPADDR" ]; then
-	echo -n "(IPADDR) Enter IP Address: [0.0.0.0 (dhcp)] "
-	read IPADDR
-	if [ -z "$IPADDR" ]; then
-		IPADDR=0.0.0.0
-	fi
-fi
-if [ -z "$NETMASK" -a "$IPADDR" != "0.0.0.0" ]; then
-	echo -n "(NETMASK) Enter Netmask: "
-	read NETMASK
-fi
-if [ -z "$GATEWAY" -a "$IPADDR" != "0.0.0.0" ]; then
-	echo -n "(GATEWAY) Enter Gateway IP Address: "
-	read GATEWAY
-fi
-if [ -z "$SUBNET" ]; then
-	DEF="$(getSubnet $IPADDR $NETMASK)$(CIDR $NETMASK)"
-	echo -n "(SUBNET) Enter Floating IP Subnet: [$DEF] "
-	read $SUBNET
-	if [ -z "$SUBNET" ]; then
-		SUBNET=$DEF
-	fi
-fi
-if [ -z "$START_ADDR" ]; then
-	S=$( echo $SUBNET | cut -d '.' -f -3)
-	DEF="$S.$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 2 ))"
-	echo -n "(START_ADDR) Enter Floating IP Subnet: [$DEF] "
-	read $START_ADDR
-	if [ -z "$START_ADDR" ]; then
-		START_ADDR=$DEF
-	fi
-fi
-if [ -z "$END_ADDR" ]; then
-	S=$( echo $SUBNET | cut -d '.' -f -3)
-	DEF="$S.$(( $(echo $SUBNET | rev | cut -d '.' -f 1 | rev | cut -d'/' -f 1) + 7 ))"
-	echo -n "(END_ADDR) Enter Floating IP Ending Address: [$DEF] "
-	read $END_ADDR
-	if [ -z "$END_ADDR" ]; then
-		END_ADDR=$DEF
-	fi
-fi
-if [ -z "$DNS" -a "$IPADDR" != "0.0.0.0" ]; then
-	echo -n "(DNS) Enter DNS IP Address: [8.8.8.8] "
-	read DNS
-	if [ -z "$DNS" ]; then
-		DNS=8.8.8.8
-	fi
-fi
-if [ -z "$INITHOST" ]; then
-	#new algoriddem
-	R=$(echo $IPADDR | rev | cut -d'.' -f 1 | rev)
-	#R=$(printf "%.2d" $(($RANDOM % 99)))
-	echo -n "(INITHOST) Enter Hostname of node: [dmzcloud$R] "
-	read INITHOST
-	if [ -z "$INITHOST" ]; then
-		INITHOST=dmzcloud$R
-	fi
-fi
-if [ -z "$LANIPADDR" ]; then
-	echo -n "(LANIPADDR) Enter LAN IP Address: [Blank for single NIC] "
-	read LANIPADDR
-	if [ -z "$LANIPADDR" ]; then
-		LANIPADDR=
-	fi
-fi
-if [ -z "$LANNETMASK" -a ! -z "$LANIPADDR" ]; then
-	echo -n "(LANNETMASK) Enter LAN Netmask: [255.255.255.0] "
-	read LANNETMASK
-	if [ -z "$LANNETMASK" ]; then
-		LANNETMASK=255.255.255.0
-	fi
-fi
-if [ -z "$LANIPNET" -a ! -z "$LANIPADDR"  ]; then
-	DEF=$(echo $LANIPADDR | rev | cut -d'.' -f 2- | rev)
-	echo -n "(LANIPNET) Enter LAN Network (must end with .0): [${DEF}.0] "
-	read LANIPNET
-	if [ -z "$LANIPNET" ]; then
-		LANIPNET=$DEF
-	else
-		LANIPNET=$(echo $LANIPNET | rev | cut -d'.' -f 2- | rev)
-	fi
-fi
-if [ -z "$ADMINUSER" ]; then
-	DEF="vusr"
-	echo -n "(ADMINUSER) Enter admin username [$DEF] "
-	read ADMINUSER
-	if [ -z "$ADMINUSER" ]; then
-		ADMINUSER=$DEF
-	else
-		ADMINUSER=$(echo $ADMINUSER | cut -c-10)
-	fi
-fi
-if [ -z "$ADMINPW" ]; then
-	DEF=$(openssl rand -hex 8)
-	echo -n "(ADMINPW) Enter admin password [$DEF] "
-	read ADMINPW
-	if [ -z "$ADMINPW" ]; then
-		ADMINPW=$DEF
-	fi
 
-	ADMINPWSAFE=$(echo $ADMINPW | openssl passwd -6 -stdin)
-fi
-if [ -z "$SSHKEY" ]; then
-	echo -n "(SSHKEY) Enter path to SSH Key [Default: create a new SSH Key] "
-	read SSHKEY
-	if [ ! -f "$SSHKEY" ]; then
-		ssh-keygen -f output/node.key -b 4096
-		SSHKEY=output/node.key
-	fi
-	SSHKEYPUB=$(ssh-keygen -yf $SSHKEY)
-fi
-if [ -z "$CENTOSURL" ]; then
-	DEF="http://repos.dfw.quadranet.com/centos/8-stream"
-	echo -n "(CENTOSURL) Enter URL to install CentOS 8 from: [$DEF] "
-	read CENTOSURL
-	if [ -z "$CENTOSURL" ]; then
-		CENTOSURL=$DEF
-	fi
-fi
-if [ -z "$CENTOSVER" ]; then
-	DEF="latest"
-	echo -n "(CENTOSVER) Enter version of CentOS 8 to install: [$DEF] "
-	read CENTOSVER
-	if [ -z "$CENTOSVER" ]; then
-		CENTOSVER=$DEF
-	fi
-fi
-if [ -z "$TIMEZONE" ]; then
-	DEF="America/Chicago"
-	echo -n "(TIMEZONE) Enter Timezone of system (e.g. UTC): [$DEF] "
-	read TIMEZONE
-	if [ -z "$TIMEZONE" ]; then
-		TIMEZONE=$DEF
-	fi
-fi
+
 
 if [ -z "$TGTSIZE" ]; then
 	TGTSIZE=785
 fi
 TGTSIZE="${TGTSIZE}M"
-	
-if [ "$IPADDR" = "0.0.0.0" ]; then
-	NETWORKLINE="dhcp "
-	NETWORKLINE2="dhcp "
-else
-	NETWORKLINE="static ${BOOTPROTO} --gateway=$GATEWAY --ip=$IPADDR --nameserver=$DNS --netmask=$NETMASK "
-	NETWORKLINE2="dhcp "
-fi
-
-#coming soon
-#mkdir -p output 2> /dev/null
-#for f in $RERUNVARS; do 
-	reruntip="$f=\$${f} $reruntip"
-#done
-#reruntip="$reruntip \$0"
-reruntip2="BOOTSTRAP_VMTYPE=$BOOTSTRAP_VMTYPE IPADDR=$IPADDR NETMASK=$NETMASK GATEWAY=$GATEWAY DNS=$DNS INITHOST=$INITHOST LANIPADDR=$LANIPADDR LANNETMASK=$LANNETMASK LANIPNET=$LANIPNET ADMINUSER=$ADMINUSER SSHKEY=$SSHKEY CENTOSURL=$CENTOSURL CENTOSVER=$CENTOSVER TIMEZONE=$TIMEZONE $0"
-echo ""
-echo "Rerun Tip:"
-echo "\`\`\`=========================================================="
-echo ""
-echo $reruntip2
-echo '#!/bin/bash' > output/bootstrap.sh
-echo '#this script was automatically generated to quickly recreate the last image' >> output/bootstrap.sh
-echo $reruntip2 >> output/bootstrap.sh
-chmod +x output/bootstrap.sh
-echo ""
-echo "==========================================================\`\`\`"
-echo ""
 
 echo "### Prereqs.."
 APT=`which apt`
@@ -210,10 +48,10 @@ if [ -z "$APT" ]; then
 	sudo yum install -y syslinux pv qemu-img aria2
 else
 	echo "Ubuntu/Debian detected"
-	sudo apt install -y syslinux pv qemu-utils  aria2
+	sudo apt install -y syslinux pv qemu-utils  aria2 fdisk
 fi
 
-if [ -f bootstrap.img ]; then
+if [ -f $OUTPUT_FILE ]; then
     echo "existing bootstrap image detected!"
     sleep 2
     echo ""
@@ -222,7 +60,7 @@ if [ -f bootstrap.img ]; then
     echo "sleeping for operator cancellation incase this is not desired behavior"
     sleep 20
     echo "in the future, remove bootstrap.img before running to prevent this delay"
-    rm bootstrap.img
+    rm $OUTPUT_FILE
 fi
 
 CENTOSDVD="CentOS8DVD.iso"
@@ -251,8 +89,23 @@ n
 w" | fdisk bootstrap.img 1>&2
 #this seems dangerous. it may have accidentally blown away one of my boot disks. this software does not come with any warranty
 LOOPDEV=$(losetup -f)
-sudo losetup -P $LOOPDEV  bootstrap.img 1>&2
+if [ -z "$LOOPDEV" ]; then
+  echo "Loopdev is empty"
+  exit 1
+fi
+
+sudo losetup -P $LOOPDEV  $OUTPUT_FILE 1>&2
 #LOOPDEV=$(losetup -a | grep bootstrap | awk -F':' '{print $1}')
+
+if [ ! -b ${LOOPDEV}p1 ]; then
+  echo "${LOOPDEV}p1 is not a device"
+  exit 1
+fi
+
+if [ ! -f /usr/lib/SYSLINUX/mbr.bin ]; then
+  echo "SYSLINUX bin missing!"
+  exit 1
+fi
 
 sudo mkfs -t vfat -n "BOOT" ${LOOPDEV}p1 1>&2
 sudo mkfs -L "DATA" ${LOOPDEV}p2 1>&2
@@ -276,25 +129,10 @@ sudo cp -av default/* BOOT 1>&2
 BOOTSTRAP_DEPLOYTYPE=".${BOOTSTRAP_DEPLOYTYPE}"
 
 
-. kickstart.sh
-
-NETWORKETH1=
-if [ ! -z "$LANIPADDR" ]; then
-	NETWORKETH1="network  --bootproto=static --device=eth1                      --ip=${LANIPADDR}                      --netmask=${LANNETMASK} --activate"
-fi
-
-echo "### Creating kickstart config"
-ksHeader output/bootstrap.ks
-ksPost output/bootstrap.ks
-sudo cp output/bootstrap.ks BOOT/ks.cfg 1>&2
-sudo cp output/bootstrap.ks DATA/ks.cfg 1>&2
+sudo cp $KICKSTART_FILE BOOT/ks.cfg 1>&2
+sudo cp $KICKSTART_FILE DATA/ks.cfg 1>&2
 sudo cp assets/bootassets/* BOOT 1>&2
 
-#BOOTSTRAP_FILE="BOOT/ks.cfg${BOOTSTRAP_DEPLOYTYPE}.template"
-#if [ -f "${BOOTSTRAP_FILE}" ]; then
-# sudo cat ${BOOTSTRAP_FILE} | sed -e "s/%NETWORKLINE%/${NETWORKLINE}/" -e "s/%NETWORKLINE2%/${NETWORKLINE2}/" -e "s/%HOSTNAME%/${INITHOST}/" -e "s/%LANIPADDR%/${LANIPADDR}/" -e "s/%LANNETMASK%/${LANNETMASK}/" -e "s/%LANIPNET%/${LANIPNET}/g" -e "s/%ADMINUSER%/${ADMINUSER}/g" -e "%s/%ADMINPW%/${ADMINPWSAFE}/g" -e "%s/%SSHPUBKEY%/${SSHKEYPUBSAFE}/g" | sudo tee  BOOT/ks.cfg
-# cp BOOT/ks.cfg output/bootstrap.ks
-#fi
 
 echo "### Writing syslinux config"
 cat << EOF | sudo tee  BOOT/syslinux.cfg 1>&2
@@ -368,6 +206,11 @@ label nodelogic
   kernel vmlinuz
   append initrd=initrd.img nomodeset net.ifnames=0 biosdevname=0 inst.stage2=hd:LABEL=BOOT  inst.ks=hd:LABEL=DATA:/ks.cfg 
 
+label docker-portainer
+  menu label ^Kickstart Nodelogic (Docker Deploy)
+  kernel vmlinuz
+  append initrd=initrd.img nomodeset net.ifnames=0 biosdevname=0 inst.stage2=hd:LABEL=BOOT  inst.ks=hd:LABEL=DATA:/ks.cfg docker-portainer
+
 label linux
   menu label ^Install CentOS 8 (NetInstall Only)
   kernel vmlinuz
@@ -431,4 +274,4 @@ if [ "$BOOTSTRAP_VMTYPE" != "none" ]; then
 	echo "Creating VM image..."
 	qemu-img convert -p -f raw -O $BOOTSTRAP_VMTYPE bootstrap.img bootstrap.$BOOTSTRAP_VMTYPE
 fi
-echo "** Use bootstrap.img to start NodeLogic **"
+echo "** Use $OUTPUT_FILE to start NodeLogic **"

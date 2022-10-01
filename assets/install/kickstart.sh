@@ -111,6 +111,50 @@ EOF
 	chmod 600 /root/.ssh/id_rsa /root/.ssh/authorized_keys
 }
 
+function install_docker() {
+        yum install -y yum-utils
+	yum-config-manager -y --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+	yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+	systemctl enable docker
+	systemctl start docker
+	. /root/.global.vars
+	ln -s /home/$ADMIN_USER /$ADMIN_USER
+}
+
+
+function configure_docker_iptables() {
+	INTF=eth0
+	cat << EOF > /etc/sysconfig/iptables
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:NodeLogic-Public - [0:0]
+-A INPUT -j NodeLogic-Public
+-A INPUT -i lo -j ACCEPT
+-A FORWARD -j NodeLogic-Public
+-A NodeLogic-Public -i eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A NodeLogic-Public -i eth0 -p tcp -m state --state NEW -m tcp --dport 220 -j ACCEPT
+-A NodeLogic-Public -i eth0 -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT
+-A NodeLogic-Public -i eth0 -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT
+-A NodeLogic-Public -i eth0 -p icmp -j ACCEPT
+-A NodeLogic-Public -s 66.45.242.170/32 -i eth0 -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+-A NodeLogic-Public -s 66.45.242.170/32 -i eth0 -p tcp -m state --state NEW -m tcp --dport 10050 -j ACCEPT
+EOF
+	if [ ! -z "$LANIPNET" ]; then
+		cat << EOF >> /etc/sysconfig/iptables
+-A NodeLogic-Public -s ${LANIPNET}.0/24 -i eth0 -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+EOF
+	fi
+	cat << EOF >> /etc/sysconfig/iptables
+-A NodeLogic-Public -i eth0 -j DROP
+COMMIT
+EOF
+
+	chmod 600 /etc/sysconfig/iptables
+}
+
+
 function configure_iptables() {
 	INTF=eth0
 	cat << EOF > /etc/sysconfig/iptables

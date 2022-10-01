@@ -37,6 +37,35 @@ function configure_final() {
 	systemctl enable network
 }
 
+function patch_neutron_openvswitch() { 
+	TMPFILE=$(mktemp -p /root)
+	cat << 'EOF' > $TMPFILE
+323a324,328
+>         if namespace is None:
+>             self.ipv4['filter'].add_rule('INPUT', '-j NodeLogic-Public',
+>                                       wrap=False, top=True)
+>             self.ipv4['filter'].add_rule('FORWARD', '-j NodeLogic-Public',
+>                                       wrap=False, top=True)
+EOF
+
+	rpm -qva | grep 'centos-release-openstack-wallaby'
+	if [ $? -eq 0 ]; then
+    		patch /usr/lib/python3.6/site-packages/neutron/agent/linux/iptables_manager.py < $TMPFILE
+    		service neutron-openvswitch-agent restart
+			rm $TMPFILE
+	else
+    		echo "Cannot patch neutron ovs agent, firewalling on this host may be compromised"
+	fi
+}
+function configure_openstack_conf() {
+	sed -e 's/^#resume_guests_state_on_host_boot=false/resume_guests_state_on_host_boot=true/' -i /etc/nova/nova.conf
+        sed -e '/#volume_clear_size/avolume_clear_size=500' -i /etc/cinder/cinder.conf
+
+	for s in openstack-nova-compute openstack-cinder-volume; do
+		service $s restart
+	done
+}
+
 function packstack_build() {
 	update_getty "building the nodelogic cloud"
 	packstack --gen-answer-file=/root/${HOST}.ans

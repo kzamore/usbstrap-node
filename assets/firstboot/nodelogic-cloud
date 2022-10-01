@@ -26,6 +26,8 @@ if [ -f /root/.nodelogic-openstack-controller ]; then
 . /usr/bin/nodelogic-openstack-helper.sh
 packstack_build
 mainevent_apply
+patch_neutron_openvswitch
+configure_openstack_conf
 configure_final 
 fi
 if [ -f /root/.nodelogic-docker-portainer ]; then

@@ -23,10 +23,16 @@ configure_hosts
 configure_sshd
 configure_ssh_known_hosts
 if [ -f /root/.nodelogic-openstack-controller ]; then
+. /usr/bin/nodelogic-openstack-helper.sh
 packstack_build
 mainevent_apply
+configure_final 
+fi
+if [ -f /root/.nodelogic-docker-portainer ]; then
+. /usr/bin/nodelogic-docker-portainer-helper.sh
+deploy_traefik
+deploy_portainer
 fi
 branding
-configure_final 
 
 systemctl disable nodelogic-firstboot
